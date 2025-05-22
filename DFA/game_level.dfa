@@ -1,0 +1,26 @@
+# Exemplu automat
+[STateS]
+Entrance, start
+Exit, end
+Hallway
+Library
+Kitchen
+Secret Room
+[EnD]
+[SigmA]
+up
+down
+left
+right
+[END]
+[RULES]
+Entrance, up, Hallway
+Hallway, down, Entrance
+Hallway, left, Kitchen
+Hallway, right, Library
+Hallway, up, Secret Room
+Kitchen, right, Hallway
+Library, left, Hallway
+Library, down, Exit
+Secret Room, down , Hallway
+[END]
