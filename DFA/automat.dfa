@@ -1,0 +1,15 @@
+# Exemplu automat
+[STateS]
+q0, start
+q1, end
+[EnD]
+[SigmA]
+0
+1
+[END]
+[RULES]
+q0,0,q1
+q0,0,q1
+q1,0,q1
+q1,1,q0
+[END]
