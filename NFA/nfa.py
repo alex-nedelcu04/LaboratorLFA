@@ -1,8 +1,19 @@
+"""
+Format fișier input:
+   [STATES] - fiecare linie: nume_stare (precizare extra dacă este de start sau de sfârșit)
+   [SIGMA] - alfabetul de intrare (un simbol pe linie)
+   [RULES] - regulile de tranziție: stare_plecare, simbol, stare_sosire
+   [END] - marchează sfârșitul fiecărei secțiuni
+"""
+
 EPS = "ε"
 def load_nfa(fn: str):
-    nfa = {}
+    nfa = dict()
+    # citire fișier și eliminare comentarii / linii goale
     with open(fn) as f:
         lines = [l.strip() for l in f if l.strip() and l.lstrip()[0] != '#']
+
+    # extregere sectiuni
 
     i = 0
     while i < len(lines):
@@ -15,6 +26,12 @@ def load_nfa(fn: str):
                 nfa[sec].append(lines[i])
                 i += 1
         i += 1
+
+    # veriicare prezenta sectiuni STATES, SIGMA SI RILES
+
+    for req in ('states', 'sigma', 'rules'):
+        if req not in nfa:
+            f"Missing [{req.upper()}] section!"
 
     # prelucrare [STATES]
     state_rows = nfa['states']
@@ -41,11 +58,13 @@ def load_nfa(fn: str):
     rule_rows = nfa['rules']
     nfa['rules'] = []
 
-    for row in rule_rows:
-        p, a, r = [x.strip() for x in row.split(',')]
-        if a.lower() in ('eps', 'epsilon'):
-            a = EPS
-        nfa['rules'].append((p, a, r))
+    for rule_line in rule_rows:
+        src_state, input_symbol, dest_state = [field.strip() for field in rule_line.split(',')]
+
+        if input_symbol.lower() in ('eps', 'epsilon'):
+            input_symbol = EPS
+
+        nfa['rules'].append((src_state, input_symbol, dest_state))
 
     return nfa
 
@@ -61,12 +80,12 @@ def epsilon_closure(states, rules):
                 stack.append(r)
     return list(closure)
 
-def isValid(word, nfa):
+def isValid(test, nfa):
 
     current = epsilon_closure({nfa['start']}, nfa['rules'])
 
     # parcurgere simboluri
-    for sym in word:
+    for sym in test:
         next_states = []
 
         for q in current:
@@ -74,7 +93,7 @@ def isValid(word, nfa):
                 if p == q and a == sym:
                     next_states.append(r)
 
-        # Închidere ε peste stările nou atinse
+        #  închidere ε peste stările nou atinse
         current = epsilon_closure(next_states, nfa['rules'])
 
         # Dacă nu mai există nicio ramură acceptabila -> respingere
@@ -87,6 +106,6 @@ def isValid(word, nfa):
 nfa = load_nfa("automat.nfa")
 
 
-words = ["", "0", "01", "001", "0011", "00110", "11001"]
-for word in words:
-    print(f"{word} -> {isValid(word, nfa)}")
+tests = ["", "0", "01", "001", "0011", "00110", "11001"]
+for test in tests:
+    print(f"{test}: {isValid(test, nfa)}")

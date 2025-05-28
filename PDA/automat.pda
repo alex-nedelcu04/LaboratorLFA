@@ -1,0 +1,25 @@
+[STATES]
+q0, start
+q1
+q2, end
+[END]
+
+[SIGMA]
+a
+b
+[END]
+
+[GAMMA]
+a
+$
+[END]
+
+[RULES]
+
+q0, eps, eps, q2, eps
+q0, a, eps, q0, a
+q0, b, a, q1, eps
+q1, b, a, q1, eps
+q1, eps, $, q2, eps
+
+[END]
