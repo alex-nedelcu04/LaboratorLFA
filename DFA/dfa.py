@@ -1,16 +1,16 @@
 """
     Format fisier input:
-       [STATES] - fiecare linie: nume_stare (precizare extra dacă este de start sau de sfarșit)
-       [SIGMA] - alfabetul de intrare (un simbol pe linie)
-       [RULES] - regulile de tranziție: stare_plecare, simbol, stare_sosire
-       [END] - marchează sfârșitul fiecărei secțiuni
+       [STATES] – fiecare linie: nume_stare (precizare extra dacă este de start sau de sfarșit)
+       [SIGMA] – alfabetul de intrare (un simbol pe linie)
+       [RULES] – regulile de tranziție: stare_plecare, simbol, stare_sosire
+       [END] – marchează sfârșitul fiecărei secțiuni
 """
 
 def load_dfa(fn: str):
     dfa = dict()
     with open(fn) as f:
         # citire fișier și eliminare comentarii / linii goale
-        lines = [line.strip() for line in f if line.strip() and not line.lstrip().startswith('#')]
+        lines = [line.split('#', 1)[0].strip() for line in f if line.split('#', 1)[0].strip()]
         idx_line = 0
         num_lines = len(lines)
         while idx_line < num_lines:
@@ -90,72 +90,29 @@ def load_dfa(fn: str):
 
     return dfa
 
-"""
-    Un joc în care DFA-ul reprezintă planul camerelor.
-    level 1 -> terminare imediat după ajungerea în camera finală
-    level = 2  -> trebuie luată o lingură din bucătărie înainte de a putea accesa camera finală
-"""
+def is_valid(word: str, dfa: dict) -> bool:
 
-def play_game(game_dfa: dict , level: int):
-    current_room = game_dfa["start"]
-    if level == 2:
-        isSpoonEquiped = False
+    current_state = dfa['start']
+    for symbol in word:
+        if symbol not in dfa['sigma']:
+            raise ValueError(f"Simbolul '{symbol}' nu face parte din alfabetul DFA!")
+        # cauta tranzitia corespunzatoare
+        next_state = None
+        for rule in dfa['rules']:
+            if rule[0] == current_state and rule[1] == symbol:
+                next_state = rule[2]
+                break
+        if next_state is None:
+            return False
+        current_state = next_state
+    return current_state == dfa['F']
 
-    while current_room != "Exit":
-        if level == 2:
-            # bucătăria conține lingura – este ridicată automat
-            if current_room == 'Kitchen':
-                print("Spoon equipped!")
-                isSpoonEquiped = True
+def main():
+    print("automat.dfa: ")
+    dfa = load_dfa("automat.dfa")
+    tests = ["", "0", "00", "1", "01", "001", "010", "0101", "0100", "0001110"]
+    for test in tests:
+        print(f"{test}: {is_valid(test, dfa)}")
 
-            if isSpoonEquiped == True:
-                print("Spoon: Equipped")
-            else:
-                print("Spoon: Not equipped")
-
-        print(f"Current room: {current_room}")
-        # construirea listei direcțiilor posibile din camera curentă
-        possible = [rule[1] for rule in game_dfa["rules"] if rule[0] == current_room]
-        print("Possible directions:", ", ".join(possible))
-        direction = input("Choose direction: ")
-
-        if direction not in game_dfa["sigma"]:
-            print()
-            print("Not a valid direction")
-            print()
-            continue
-
-        # căutare regulă (current_room, direction, ?)
-        found_direction = False
-        for rule in game_dfa["rules"]:
-            if rule[0] == current_room:
-                if rule[1] == direction:
-                    found_direction = True
-                    # s-a ajuns în camera finală
-                    if rule[2] == game_dfa["F"]:
-                        if level == 1:
-                            current_room = rule[2]
-                        elif level == 2:
-                            if isSpoonEquiped == True:
-                                current_room = rule[2]
-                            else:
-                                # continuare fără schimbarea camerei
-                                print("Can't exit. Spoon is not equipped!")
-                                continue
-                    else:
-                        current_room = rule[2]
-
-                    break
-
-        if found_direction == False:
-            print(f"No rule for {direction} direction")
-
-        print()
-    print("Game over!")
-
-
-
-# print(load_dfa("automat.dfa"))
-game_dfa = load_dfa("game_level.dfa")
-print(game_dfa)
-play_game(game_dfa, 2)
+if __name__ == "__main__":
+    main()

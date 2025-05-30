@@ -7,6 +7,8 @@ Format fişier symbol_input:
     [END] - marchează sfârșitul fiecărei secțiuni
 """
 
+import sys
+
 EPS = "ε"
 DOLLAR = "$"
 
@@ -14,8 +16,7 @@ def load_pda(filename: str):
     # Citește liniile (fără comentarii / goluri)
     sections =  dict()
     with open(filename) as f:
-        lines = [ln.strip() for ln in f
-                 if ln.strip() and ln.lstrip()[0] != '#']
+        lines = [line.split('#', 1)[0].strip() for line in f if line.split('#', 1)[0].strip()]
 
     i = 0
     while i < len(lines):
@@ -68,9 +69,15 @@ def load_pda(filename: str):
                 push = EPS
             pda['rules'].append((q, a, X, p, push))
 
+    # veriicare prezenta sectiuni STATES, SIGMA SI RILES
+
+    for req in ('states', 'sigma', 'gamma', 'rules'):
+        if req not in pda:
+            f"Missing [{req.upper()}] section!"
+
     return pda
 
-def isValid(word: str, pda, max_steps: int = 10000) -> bool:
+def is_valid(word: str, pda, max_steps: int = 10000) -> bool:
     queue = [[pda['start'], 0, DOLLAR]]
     visited = [queue[0]]
     steps = 0
@@ -118,9 +125,29 @@ def isValid(word: str, pda, max_steps: int = 10000) -> bool:
 
     return False
 
+def main():
+    pda = load_pda("a^n-b^n.pda")
 
-pda = load_pda("automat.pda")
+    tests = ["", "ab", "aabb", "aaabbb", "aab", "abb"]
+    for test in tests:
+        print(f"{test}: {is_valid(test, pda)}")
 
-tests = ["", "ab", "aabb", "aaabbb", "aab", "abb"]
-for test in tests:
-    print(f"{test}: {isValid(test, pda)}")
+    print()
+    pda = load_pda("parentheses.pda")
+
+    tests = ["", "()", "(())", "()()", "(()())", "(()", "())(", ")(()"]
+    for test in tests:
+        print(f"{test}: {is_valid(test, pda)}")
+
+    print()
+
+    # rulare pt argumente command line
+    n = len(sys.argv)
+    if n > 1:
+        print()
+        print('--- ARGUMENTE COMMAND LINE ---')
+        for i in range(1, n):
+            print(f"{sys.argv[i]}: {is_valid(sys.argv[i], pda)}")
+
+if __name__ == "__main__":
+    main()

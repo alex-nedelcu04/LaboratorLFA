@@ -1,0 +1,23 @@
+# scrie 1 0 1 0 si se opreste
+[STATES]
+q0, start
+q1
+q2
+q3
+STOP, end
+[END]
+[CHARACTERS]
+space
+0
+1
+[END]
+[DIRECTIONS]
+L
+R
+[END]
+[RULES]
+(q0,  ) -> (q1, 1, R)   # scrie 1
+(q1,  ) -> (q2, 0, R)   # scrie 0
+(q2,  ) -> (q3, 1, R)   # scrie 1
+(q3,  ) -> (STOP, 0, R) # scrie 0 şi opreşte
+[END]

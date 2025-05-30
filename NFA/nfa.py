@@ -5,6 +5,7 @@ Format fișier input:
    [RULES] - regulile de tranziție: stare_plecare, simbol, stare_sosire
    [END] - marchează sfârșitul fiecărei secțiuni
 """
+import sys
 
 EPS = "ε"
 def load_nfa(fn: str):
@@ -80,7 +81,7 @@ def epsilon_closure(states, rules):
                 stack.append(r)
     return list(closure)
 
-def isValid(test, nfa):
+def is_valid(test, nfa):
 
     current = epsilon_closure({nfa['start']}, nfa['rules'])
 
@@ -103,9 +104,36 @@ def isValid(test, nfa):
     # Acceptare dacă oricare dintre stările curente este finală
     return any(q in nfa['finals'] for q in current)
 
-nfa = load_nfa("automat.nfa")
+def main():
+    print("accept_ending_with_01.nfa:")
+    nfa = load_nfa("accept_ending_with_01.nfa")
+    tests = ["", "0", "01", "001", "0011", "00110", "11001"]
+    for test in tests:
+        print(f"{test}: {is_valid(test, nfa)}")
+
+    print()
+
+    print("accept_1_on_3rd_pos_from_end.nfa:")
+    nfa = load_nfa("accept_1_on_3rd_pos_from_end.nfa")
+    tests = ["", "0", "01", "001", "0011", "00110", "11001", "1100", "00110011001100"]
+    for test in tests:
+        print(f"{test}: {is_valid(test, nfa)}")
+
+    print()
+    print("accept_1_on_3rd_pos_from_end_DFA.nfa:")
+    nfa = load_nfa("accept_1_on_3rd_pos_from_end_DFA.nfa")
+    tests = ["", "0", "01", "001", "0011", "00110", "11001", "1100", "00110011001100"]
+    for test in tests:
+        print(f"{test}: {is_valid(test, nfa)}")
+
+    # rulare pt argumente command line
+    n = len(sys.argv)
+    if n > 1:
+        print()
+        print('--- ARGUMENTE COMMAND LINE ---')
+        for i in range(1, n):
+            print(f"{sys.argv[i]}: {is_valid(sys.argv[i], nfa)}")
 
 
-tests = ["", "0", "01", "001", "0011", "00110", "11001"]
-for test in tests:
-    print(f"{test}: {isValid(test, nfa)}")
+if __name__ == "__main__":
+    main()

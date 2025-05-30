@@ -1,0 +1,20 @@
+# scrie 1, merge dreapta, scrie 1, merge stânga, scrie 1, STOP
+[STATES]
+q0, start
+right
+left
+STOP, end
+[END]
+[CHARACTERS]
+space
+1
+[END]
+[DIRECTIONS]
+L
+R
+[END]
+[RULES]                    # pornim pe celula 0
+(q0, space)   -> (right, 1, R) # scrie 1, merge la dreapta
+(right, space) -> (left, 1, L) # scrie 1, revine la stânga
+(left, 1)  -> (STOP, 1, R) # ultima mişcare; capul ajunge pe 1-ul din mijloc
+[END]

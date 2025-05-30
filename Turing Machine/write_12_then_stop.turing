@@ -1,0 +1,19 @@
+# scrie 1 2 si se opreste
+[STATES]
+q0, start
+q1
+STOP, end
+[END]
+[CHARACTERS]
+space
+1
+2
+[END]
+[DIRECTIONS]
+L
+R
+[END]
+[RULES]
+(q0, space) -> (q1, 1, R)
+(q1,  ) -> (q0, 2, L)
+[END]
