@@ -5,6 +5,7 @@ Format fişier symbol_input:
     [GAMMA] - simbol stivă
     [RULES] - stare_src, symbol_input(sau eps), stack_pop(sau eps), stare_dest, stack_push(sau eps)
     [END] - marchează sfârșitul fiecărei secțiuni
+    Comentarii : //
 """
 
 import sys
@@ -16,7 +17,7 @@ def load_pda(filename: str):
     # Citește liniile (fără comentarii / goluri)
     sections =  dict()
     with open(filename) as f:
-        lines = [line.split('#', 1)[0].strip() for line in f if line.split('#', 1)[0].strip()]
+        lines = [line.split("//", 1)[0].strip() for line in f if line.split("//", 1)[0].strip()]
 
     i = 0
     while i < len(lines):

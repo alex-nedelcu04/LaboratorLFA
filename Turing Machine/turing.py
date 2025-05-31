@@ -1,10 +1,20 @@
+"""
+Format fișier input:
+   [STATES] - fiecare linie: nume_stare (precizare extra dacă este de start sau de sfârșit)
+   [CHARACTERS] - alfabetul de intrare (un simbol pe linie)
+   [DIRECTIONS] - directiile posibile (L/R)
+   [RULES] - regulile de tranziție: stare_plecare, simbol, stare_sosire
+   [END] - marchează sfârșitul fiecărei secțiuni
+   Comentarii : //
+"""
 import re
 def load_turing(fn: str) :
     turing = dict()
     found_start = False
     found_end = False
     with open(fn) as f:
-        lines = [line.split('#', 1)[0].strip() for line in f if line.split('#', 1)[0].strip()]
+        # eliminare comentarii și linii albe
+        lines = [line.split("//", 1)[0].strip() for line in f if line.split("//", 1)[0].strip()]
         idx_line = 0
         num_lines = len(lines)
         while idx_line < num_lines:
@@ -16,6 +26,7 @@ def load_turing(fn: str) :
                 idx_line += 1
                 # parcurgere argumete primite pana la intalnirea unui [END]
                 while lines[idx_line].upper() != '[END]':
+                    # obtinere stari si stabilirea celor care sunt de start si de sfarsit
                     add_to_argument = [elem.strip() for elem in lines[idx_line].split(',')]
                     if add_to_argument[0] == 'space':
                         add_to_argument[0] = ' '
@@ -36,7 +47,7 @@ def load_turing(fn: str) :
             elif lines[idx_line].upper() != '[END]':
                 argument = lines[idx_line][1:-1].lower()
                 idx_line += 1
-                # parcurgere argumete primite pana la intalnirea unui [END]
+                # parcurgere argumente primite pana la intalnirea unui [END]
                 while lines[idx_line].upper() != '[END]':
                     add_to_argument = lines[idx_line]
                     if add_to_argument == 'space':
@@ -50,7 +61,7 @@ def load_turing(fn: str) :
 
             idx_line += 1
 
-    # veriicare prezenta sectiuni STATES, SIGMA SI RULES
+    # veriicare prezenta sectiuni STATES, CHARCATERS, DIRECTIONS si RULES
 
     for req in ('states', 'characters', 'directions', 'rules'):
         if req not in turing.keys():
@@ -137,6 +148,8 @@ def main():
     print(f"Tape before: {tape}")
     tape = run_turing(load_turing("add_1_to_existing_tape.turing"), tape, tape_size)
     print(f"Tape now: {tape}")
+
+
 
 if __name__ == "__main__":
     main()

@@ -4,6 +4,7 @@ Format fișier input:
    [SIGMA] - alfabetul de intrare (un simbol pe linie)
    [RULES] - regulile de tranziție: stare_plecare, simbol, stare_sosire
    [END] - marchează sfârșitul fiecărei secțiuni
+   Comentarii : //
 """
 import sys
 
@@ -12,7 +13,7 @@ def load_nfa(fn: str):
     nfa = dict()
     # citire fișier și eliminare comentarii / linii goale
     with open(fn) as f:
-        lines = [l.strip() for l in f if l.strip() and l.lstrip()[0] != '#']
+        lines = [line.split("//", 1)[0].strip() for line in f if line.split("//", 1)[0].strip()]
 
     # extregere sectiuni
 

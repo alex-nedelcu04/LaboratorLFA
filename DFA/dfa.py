@@ -4,13 +4,14 @@
        [SIGMA] – alfabetul de intrare (un simbol pe linie)
        [RULES] – regulile de tranziție: stare_plecare, simbol, stare_sosire
        [END] – marchează sfârșitul fiecărei secțiuni
+       Comentarii : //
 """
 
 def load_dfa(fn: str):
     dfa = dict()
     with open(fn) as f:
         # citire fișier și eliminare comentarii / linii goale
-        lines = [line.split('#', 1)[0].strip() for line in f if line.split('#', 1)[0].strip()]
+        lines = [line.split("//", 1)[0].strip() for line in f if line.split("//", 1)[0].strip()]
         idx_line = 0
         num_lines = len(lines)
         while idx_line < num_lines:
