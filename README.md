@@ -51,7 +51,7 @@ Run script (while in the DFA directory):
 python3 ./dfa.py [filename] [string1] [string2] ... [stringn]
 ```
 
-### B. DFA Game
+### b. DFA Game
 
 This simple game uses a DFA to map the way the player can navigate through multiple rooms. You start at the entrance and have to make your way towards the exit.
 
