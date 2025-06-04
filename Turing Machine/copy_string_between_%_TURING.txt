@@ -1,0 +1,103 @@
+# Copies from the start of the tape to between two % symbols
+[STATES]
+q0, start
+q1
+q2
+q3
+q4
+q5
+q6
+q7
+q8
+q9, end
+[END]
+
+[CHARACTERS]
+space
+0
+1
+$
+%
+X
+Y
+[END]
+
+[DIRECTIONS]
+L
+R
+[END]
+
+[RULES]
+# 1. State q0: search for the first unmarked 0/1 before '$'
+(q0, 0) -> (q1, X, R)   # found '0', mark it with 'X' and move to copying
+(q0, 1) -> (q4, Y, R)   # found '1', mark it with 'Y' and move to copying
+(q0, X) -> (q0, X, R)   # skip over an already marked 0 (X)
+(q0, Y) -> (q0, Y, R)   # skip over an already marked 1 (Y)
+(q0,  ) -> (q0,  , R)   # skip over blanks until '$'
+(q0, $) -> (q8, $, R)   # if I encounter '$', it means copying is done
+
+# 2. State q1: having marked a '0' (X), now go towards the first '%'
+(q1, X) -> (q1, X, R)
+(q1, Y) -> (q1, Y, R)
+(q1, 0) -> (q1, 0, R)
+(q1, 1) -> (q1, 1, R)
+(q1, $) -> (q1, $, R)
+(q1,  ) -> (q1,  , R)
+(q1, %) -> (q2, %, R)   # at the first '%', go to q2 and enter the write area
+
+# 3. State q2: write '0' at the first blank after '%'
+(q2, X) -> (q2, X, R)
+(q2, Y) -> (q2, Y, R)
+(q2, 0) -> (q2, 0, R)
+(q2, 1) -> (q2, 1, R)
+(q2, $) -> (q2, $, R)
+(q2, %) -> (q2, %, R)   # skip over any delimiters, if encountered
+(q2,  ) -> (q3, 0, L)   # found the first blank, write '0' and go to q3
+
+# 4. State q3: return to the X mark and then go back to q0
+(q3, 0) -> (q3, 0, L)
+(q3, 1) -> (q3, 1, L)
+(q3, X) -> (q0, X, R)   # at X, return to q0 and continue with the next symbol
+(q3, Y) -> (q3, Y, L)
+(q3, $) -> (q3, $, L)
+(q3, %) -> (q3, %, L)
+(q3,  ) -> (q3,  , L)
+
+# 5. State q4: having marked a '1' (Y), now go towards the first '%'
+(q4, X) -> (q4, X, R)
+(q4, Y) -> (q4, Y, R)
+(q4, 0) -> (q4, 0, R)
+(q4, 1) -> (q4, 1, R)
+(q4, $) -> (q4, $, R)
+(q4,  ) -> (q4,  , R)
+(q4, %) -> (q5, %, R)   # at the first '%', go to q5 and enter the write area
+
+# 6. State q5: write '1' at the first blank after '%'
+(q5, X) -> (q5, X, R)
+(q5, Y) -> (q5, Y, R)
+(q5, 0) -> (q5, 0, R)
+(q5, 1) -> (q5, 1, R)
+(q5, $) -> (q5, $, R)
+(q5, %) -> (q5, %, R)   # similarly, skip over any delimiters
+(q5,  ) -> (q6, 1, L)   # found the first blank, write '1' and go to q6
+
+# 7. State q6: return to the Y mark and then go back to q0
+(q6, 0) -> (q6, 0, L)
+(q6, 1) -> (q6, 1, L)
+(q6, X) -> (q6, X, L)
+(q6, Y) -> (q0, Y, R)   # at Y, return to q0 and continue with the next symbol
+(q6, $) -> (q6, $, L)
+(q6, %) -> (q6, %, L)
+(q6,  ) -> (q6,  , L)
+
+# 8. State q8: q0 encountered '$' – now restore X→0 and Y→1
+(q8, X) -> (q8, 0, L)
+(q8, Y) -> (q8, 1, L)
+(q8, 0) -> (q8, 0, L)
+(q8, 1) -> (q8, 1, L)
+(q8, $) -> (q8, $, L)
+(q8, %) -> (q8, %, L)
+(q8,  ) -> (q9,  , R)   # at the first blank on the left part of the tape, go to q9 (halt)
+
+# 9. State q9 is 'end' and has no rules (machine halts)
+[END]

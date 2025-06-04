@@ -1,4 +1,4 @@
-# accepta doar sirurile care au 1 pe a 3-a pozitie de la capat
+# accepts only strings that have 1 on the 3rd position from the end
 [STATES]
 q1, start
 q2

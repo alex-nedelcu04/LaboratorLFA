@@ -1,0 +1,25 @@
+# Fills every second blank space on the tape with 1
+[STATES]
+q0, start
+q1
+q_accept, end
+[END]
+
+[CHARACTERS]
+space
+1
+[END]
+
+[DIRECTIONS]
+L
+R
+[END]
+
+[RULES]
+(q0,  ) -> (q1,  , R)
+(q1,  ) -> (q0, 1, R)
+(q0, 1) -> (q0, 1, R)
+(q1, 1) -> (q1, 1, R)
+(q0,  ) -> (q_accept,  , R)
+(q1,  ) -> (q_accept,  , R)
+[END]

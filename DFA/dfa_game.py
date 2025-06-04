@@ -1,8 +1,8 @@
 from dfa import load_dfa
 """
-    Un joc în care DFA-ul reprezintă planul camerelor.
-    level 1 -> terminare imediat după ajungerea în camera finală
-    level = 2  -> trebuie luată o lingură din bucătărie înainte de a putea accesa camera finală
+    A game where a DFA is used to map the planning of multiple rooms
+    level = 1 -> Game ends when you reach the "Exit" room
+    level = 2  -> You need to equip a spoon from the Kitchen to be able to acces the "Exit" room
 """
 
 def play_game(game_dfa: dict , level: int):
@@ -12,9 +12,10 @@ def play_game(game_dfa: dict , level: int):
 
     while current_room != "Exit":
         if level == 2:
-            # bucătăria conține lingura – este ridicată automat
+            # The kitchen include the spoon - it is picked up automaticallu
             if current_room == 'Kitchen':
                 print("Spoon equipped!")
+                print()
                 isSpoonEquiped = True
 
             if isSpoonEquiped == True:
@@ -23,24 +24,24 @@ def play_game(game_dfa: dict , level: int):
                 print("Spoon: Not equipped")
 
         print(f"Current room: {current_room}")
-        # construirea listei direcțiilor posibile din camera curentă
+        # creating the list of possible directions from the current room
         possible = [rule[1] for rule in game_dfa["rules"] if rule[0] == current_room]
         print("Possible directions:", ", ".join(possible))
         direction = input("Choose direction: ")
 
         if direction not in game_dfa["sigma"]:
             print()
-            print("Not a valid direction")
+            print("Not a valid direction!")
             print()
             continue
 
-        # căutare regulă (current_room, direction, ?)
+        # searching for the rule (current_room, direction, ?)
         found_direction = False
         for rule in game_dfa["rules"]:
             if rule[0] == current_room:
                 if rule[1] == direction:
                     found_direction = True
-                    # s-a ajuns în camera finală
+                    # "Exit" room reached
                     if rule[2] == game_dfa["F"]:
                         if level == 1:
                             current_room = rule[2]
@@ -48,7 +49,8 @@ def play_game(game_dfa: dict , level: int):
                             if isSpoonEquiped == True:
                                 current_room = rule[2]
                             else:
-                                # continuare fără schimbarea camerei
+                                # Spoon not equipped. Continue without changing rooms
+                                print()
                                 print("Can't exit. Spoon is not equipped!")
                                 continue
                     else:
@@ -57,17 +59,22 @@ def play_game(game_dfa: dict , level: int):
                     break
 
         if found_direction == False:
-            print(f"No rule for {direction} direction")
+            print()
+            print(f"No rule for {direction} direction!")
 
         print()
     print("Game over!")
 
 
 def main():
-    # print(load_dfa("automat.dfa"))
-    game_dfa = load_dfa("game_level.dfa")
-    print(game_dfa)
-    play_game(game_dfa, 2)
+    game_dfa = load_dfa("game_DFA.txt")
+    # print(game_dfa)
+    print("--> level = 1 - Game ends when you reach the Exit room")
+    print("--> level = 2  - You need to equip a spoon from the Kitchen to be able to acces the Exit room")
+    print()
+    level = int(input("Enter the level you want to play: "))
+    print("---- DFA ROOMS GAME ----")
+    play_game(game_dfa, level)
 
 if __name__ == "__main__":
     main()

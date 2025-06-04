@@ -1,3 +1,4 @@
+# accepts string with the format (a^n)(b^n)
 [STATES]
 q0, start
 q1

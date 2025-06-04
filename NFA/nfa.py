@@ -1,21 +1,21 @@
 """
-Format fișier input:
-   [STATES] - fiecare linie: nume_stare (precizare extra dacă este de start sau de sfârșit)
-   [SIGMA] - alfabetul de intrare (un simbol pe linie)
-   [RULES] - regulile de tranziție: stare_plecare, simbol, stare_sosire
-   [END] - marchează sfârșitul fiecărei secțiuni
-   Comentarii : //
+    Input file format:
+       [STATES] - on every line: state_name [, start] / [, end] (one state need to be labeled as start, another as end)
+       [SIGMA] - input alphabet (one symbol for every line)
+       [RULES] - transition rules: source_state, symbol, destination_state
+       [END] - marks the end of a section
+       Comments : #
 """
 import sys
 
 EPS = "ε"
 def load_nfa(fn: str):
     nfa = dict()
-    # citire fișier și eliminare comentarii / linii goale
+    # read from file and ignore comments and empty lines
     with open(fn) as f:
-        lines = [line.split("//", 1)[0].strip() for line in f if line.split("//", 1)[0].strip()]
+        lines = [line.split("#", 1)[0].strip() for line in f if line.split("#", 1)[0].strip()]
 
-    # extregere sectiuni
+    # extract sections
 
     i = 0
     while i < len(lines):
@@ -29,13 +29,13 @@ def load_nfa(fn: str):
                 i += 1
         i += 1
 
-    # veriicare prezenta sectiuni STATES, SIGMA SI RILES
+    # check if [STATES], [SIGMA], [RULES] sections are present
 
     for req in ('states', 'sigma', 'rules'):
         if req not in nfa:
             f"Missing [{req.upper()}] section!"
 
-    # prelucrare [STATES]
+    # process data from [STATES]
     state_rows = nfa['states']
     names, finals = [], []
     start = None
@@ -71,7 +71,7 @@ def load_nfa(fn: str):
     return nfa
 
 def epsilon_closure(states, rules):
-    """Toate stările accesibile doar prin ε din oricare stare din 'states'."""
+    # all states accessible only through ε from every state from 'states'.
     stack = list(states)
     closure = set(states)
     while stack:
@@ -82,11 +82,11 @@ def epsilon_closure(states, rules):
                 stack.append(r)
     return list(closure)
 
-def is_valid(test, nfa):
+def is_nfa_valid(test, nfa):
 
     current = epsilon_closure({nfa['start']}, nfa['rules'])
 
-    # parcurgere simboluri
+    # go through all symbols
     for sym in test:
         next_states = []
 
@@ -95,45 +95,68 @@ def is_valid(test, nfa):
                 if p == q and a == sym:
                     next_states.append(r)
 
-        #  închidere ε peste stările nou atinse
+        #  close ε  over the newly reached states
         current = epsilon_closure(next_states, nfa['rules'])
 
-        # Dacă nu mai există nicio ramură acceptabila -> respingere
+        # If there is no more acceptable branch -> REJECT
         if not current:
             return False
 
-    # Acceptare dacă oricare dintre stările curente este finală
+    # ACCEPT if every current state is final
     return any(q in nfa['finals'] for q in current)
 
 def main():
-    print("accept_ending_with_01.nfa:")
-    nfa = load_nfa("accept_ending_with_01.nfa")
-    tests = ["", "0", "01", "001", "0011", "00110", "11001"]
-    for test in tests:
-        print(f"{test}: {is_valid(test, nfa)}")
+    n = len(sys.argv)  # number of arguments                                                       
 
-    print()
-
-    print("accept_1_on_3rd_pos_from_end.nfa:")
-    nfa = load_nfa("accept_1_on_3rd_pos_from_end.nfa")
-    tests = ["", "0", "01", "001", "0011", "00110", "11001", "1100", "00110011001100"]
-    for test in tests:
-        print(f"{test}: {is_valid(test, nfa)}")
-
-    print()
-    print("accept_1_on_3rd_pos_from_end_DFA.nfa:")
-    nfa = load_nfa("accept_1_on_3rd_pos_from_end_DFA.nfa")
-    tests = ["", "0", "01", "001", "0011", "00110", "11001", "1100", "00110011001100"]
-    for test in tests:
-        print(f"{test}: {is_valid(test, nfa)}")
-
-    # rulare pt argumente command line
-    n = len(sys.argv)
+    # run command line arguments (if they exist)                                                  
     if n > 1:
+        try:
+            # first argument = NFA file                                                           
+            with open(sys.argv[1]) as file:
+                print(f"-> Read NFA from {file.name}")
+                nfa = load_nfa(file.name)
+        except FileNotFoundError:
+            print(f"Error: file '{sys.argv[1]}' not found.")
+            sys.exit(1)
+
+        print('--- COMMAND LINE ARGUMENTS ---')
+        for i in range(2, n):
+            if is_nfa_valid(sys.argv[i], nfa) == True:
+                print(f"String {sys.argv[i]}: PASSED")
+            else:
+                print(f"String {sys.argv[i]}: REJECTED")
+
+    else:
+        # default tests if not
+        print("accept_ending_with_01_NFA.txt:")
+        nfa = load_nfa("accept_ending_with_01_NFA.txt")
+        tests = ["", "0", "01", "001", "0011", "00110", "11001"]
+        for test in tests:
+            if is_nfa_valid(test, nfa) == True:
+                print(f"String {test}: PASSED")
+            else:
+                print(f"String {test}: REJECTED")
+
         print()
-        print('--- ARGUMENTE COMMAND LINE ---')
-        for i in range(1, n):
-            print(f"{sys.argv[i]}: {is_valid(sys.argv[i], nfa)}")
+
+        print("accept_1_on_3rd_pos_from_end_NFA.txt:")
+        nfa = load_nfa("accept_1_on_3rd_pos_from_end_NFA.txt")
+        tests = ["", "0", "01", "001", "0011", "00110", "11001", "1100", "00110011001100"]
+        for test in tests:
+            if is_nfa_valid(test, nfa) == True:
+                print(f"String {test}: PASSED")
+            else:
+                print(f"String {test}: REJECTED")
+
+        print()
+        print("DFA_accept_1_on_3rd_pos_from_end_NFA.txt:")
+        nfa = load_nfa("DFA_accept_1_on_3rd_pos_from_end_NFA.txt")
+        tests = ["", "0", "01", "001", "0011", "00110", "11001", "1100", "00110011001100"]
+        for test in tests:
+            if is_nfa_valid(test, nfa) == True:
+                print(f"String {test}: PASSED")
+            else:
+                print(f"String {test}: REJECTED")
 
 
 if __name__ == "__main__":

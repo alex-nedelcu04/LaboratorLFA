@@ -1,11 +1,11 @@
 """
-Format fişier symbol_input:
-    [STATES] - q0 (precizare extra dacă este de start sau de sfarșit)
-    [SIGMA] - simbol
-    [GAMMA] - simbol stivă
-    [RULES] - stare_src, symbol_input(sau eps), stack_pop(sau eps), stare_dest, stack_push(sau eps)
-    [END] - marchează sfârșitul fiecărei secțiuni
-    Comentarii : //
+    Input file format:
+       [STATES] - on every line: state_name [, start] / [, end] (one state need to be labeled as start, another as end)
+       [SIGMA] - input alphabet (one symbol for every line)
+       [GAMMA] - stack symbol
+       [RULES] - transition rules: source_state, symbol_input (or eps), stack_pop (or eps), destination_state, stack_push (or eps)
+       [END] - marks the end of a section
+       Comments : #
 """
 
 import sys
@@ -14,10 +14,10 @@ EPS = "ε"
 DOLLAR = "$"
 
 def load_pda(filename: str):
-    # Citește liniile (fără comentarii / goluri)
+    # read from file and ignore comments and empty lines  
     sections =  dict()
     with open(filename) as f:
-        lines = [line.split("//", 1)[0].strip() for line in f if line.split("//", 1)[0].strip()]
+        lines = [line.split("#", 1)[0].strip() for line in f if line.split("#", 1)[0].strip()]
 
     i = 0
     while i < len(lines):
@@ -32,7 +32,8 @@ def load_pda(filename: str):
         i += 1
 
 
-    # STĂRI: listă, stare de start, stări finale
+    # STATES
+    
     states = []
     finals = []
     start = None
@@ -57,7 +58,7 @@ def load_pda(filename: str):
     pda['gamma'] = sections['gamma'] if 'gamma' in sections else []
     pda['rules'] = []
 
-    # TRANZITII
+    # TRANSITIONS
     
     if 'rules' in sections:
         for r in sections['rules']:
@@ -70,7 +71,7 @@ def load_pda(filename: str):
                 push = EPS
             pda['rules'].append((q, a, X, p, push))
 
-    # veriicare prezenta sectiuni STATES, SIGMA SI RILES
+    # check if [STATES], [SIGMA], [RULES] sections are present    
 
     for req in ('states', 'sigma', 'gamma', 'rules'):
         if req not in pda:
@@ -78,29 +79,29 @@ def load_pda(filename: str):
 
     return pda
 
-def is_valid(word: str, pda, max_steps: int = 10000) -> bool:
+def is_pda_valid(word: str, pda, max_steps: int = 10000) -> bool:
     queue = [[pda['start'], 0, DOLLAR]]
     visited = [queue[0]]
     steps = 0
 
     while queue and steps < max_steps:
-        # scoate primul element
+        # remove first element
         state, pos, stack = queue.pop(0)
         steps += 1
 
-        # accepțare dacă a fost citit tot cuvântul și ește într-o stare finală
+        # accept if the whole string was read and the state is a final one
         if pos == len(word) and state in pda['finals']:
             return True
 
         top = stack[-1] if stack else EPS
 
-        # parcurge toate regulile care pleacă din starea curentă
+        # fo through every rule that begin from the current state
         for rule in pda['rules']:
             q_src, symbol_input, stack_pop, q_dest, push = rule
             if q_src != state:
                 continue
 
-            # potrivirea pe simbolul de intrare
+            # matching on starting symbol
             if symbol_input != EPS:
                 if pos >= len(word) or word[pos] != symbol_input:
                     continue
@@ -108,11 +109,11 @@ def is_valid(word: str, pda, max_steps: int = 10000) -> bool:
             else:
                 new_pos = pos
 
-            # potrivirea pe vârful stivei
+            # matching on the top of the stack
             if stack_pop != EPS and top != stack_pop:
                 continue
 
-            # construire stiva nouă
+            # build new stack
             new_stack = stack
             if stack_pop != EPS:  # POP
                 new_stack = new_stack[:-1]
@@ -127,28 +128,52 @@ def is_valid(word: str, pda, max_steps: int = 10000) -> bool:
     return False
 
 def main():
-    pda = load_pda("a^n-b^n.pda")
+    n = len(sys.argv)  # number of arguments                                                           
 
-    tests = ["", "ab", "aabb", "aaabbb", "aab", "abb"]
-    for test in tests:
-        print(f"{test}: {is_valid(test, pda)}")
-
-    print()
-    pda = load_pda("parentheses.pda")
-
-    tests = ["", "()", "(())", "()()", "(()())", "(()", "())(", ")(()"]
-    for test in tests:
-        print(f"{test}: {is_valid(test, pda)}")
-
-    print()
-
-    # rulare pt argumente command line
-    n = len(sys.argv)
+    # run command line arguments (if they exist)                                                      
     if n > 1:
+        try:
+            # first argument = PDA file                                                               
+            with open(sys.argv[1]) as file:
+                print(f"-> Read PDA from {file.name}")
+                pda = load_pda(file.name)
+        except FileNotFoundError:
+            print(f"Error: file '{sys.argv[1]}' not found.")
+            sys.exit(1)
+
+        print('--- COMMAND LINE ARGUMENTS ---')
+
+        for i in range(2, n):
+            if is_pda_valid(sys.argv[i], pda) == True:
+                print(f"String {sys.argv[i]}: PASSED")
+            else:
+                print(f"String {sys.argv[i]}: REJECTED")
+
+    else:
+        # default tests if not
+        print(f"-> Read PDA from a^n-b^n_PDA.txt")
+        pda = load_pda("a^n-b^n_PDA.txt")
+
+        tests = ["", "ab", "aabb", "aaabbb", "aab", "abb"]
+        for test in tests:
+            if is_pda_valid(test, pda) == True:
+                print(f"String {test}: PASSED")
+            else:
+                print(f"String {test}: REJECTED")
+
         print()
-        print('--- ARGUMENTE COMMAND LINE ---')
-        for i in range(1, n):
-            print(f"{sys.argv[i]}: {is_valid(sys.argv[i], pda)}")
+
+        print(f"-> Read PDA from parentheses_PDA.txt")
+        pda = load_pda("parentheses_PDA.txt")
+
+        tests = ["", "()", "(())", "()()", "(()())", "(()", "())(", ")(()"]
+        for test in tests:
+            if is_pda_valid(test, pda) == True:
+                print(f"String {test}: PASSED")
+            else:
+                print(f"String {test}: REJECTED")
+
+        print()
 
 if __name__ == "__main__":
     main()

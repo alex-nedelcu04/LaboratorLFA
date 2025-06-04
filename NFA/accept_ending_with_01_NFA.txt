@@ -1,4 +1,4 @@
-# accepta doar sirurile care se termina cu 01
+# accepts only strings ending in 01
 [STATES]
 q0, start
 q1

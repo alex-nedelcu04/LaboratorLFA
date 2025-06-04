@@ -1,27 +1,28 @@
 """
-    Format fisier input:
-       [STATES] – fiecare linie: nume_stare (precizare extra dacă este de start sau de sfarșit)
-       [SIGMA] – alfabetul de intrare (un simbol pe linie)
-       [RULES] – regulile de tranziție: stare_plecare, simbol, stare_sosire
-       [END] – marchează sfârșitul fiecărei secțiuni
-       Comentarii : //
+    Input file format:
+       [STATES] - on every line: state_name [, start] / [, end] (one state need to be labeled as start, another as end)
+       [SIGMA] - input alphabet (one symbol for every line)
+       [RULES] - transition rules: source_state, symbol, destination_state
+       [END] - marks the end of a section
+       Comments : #
 """
+import sys
 
 def load_dfa(fn: str):
     dfa = dict()
     with open(fn) as f:
-        # citire fișier și eliminare comentarii / linii goale
-        lines = [line.split("//", 1)[0].strip() for line in f if line.split("//", 1)[0].strip()]
+        # read from file and ignore comments and empty lines
+        lines = [line.split("#", 1)[0].strip() for line in f if line.split("#", 1)[0].strip()]
         idx_line = 0
         num_lines = len(lines)
         while idx_line < num_lines:
-            # parcurgere pana la intalnirea unuia dintre [STATES], [SIGMA] si [RULES]
+            # go through lines until finding [STATES], [SIGMA] or [RULES]
             while lines[idx_line][0] != '[' and lines[idx_line][-1] != ']':
                 idx_line += 1
             if lines[idx_line].upper() != '[END]':
                 argument = lines[idx_line][1:-1].lower()
                 idx_line += 1
-                # parcurgere argumete primite pana la intalnirea unui [END]
+                # go through the section's arguments until finding [END]
                 while lines[idx_line].upper() != '[END]':
                     if argument not in dfa.keys():
                         dfa[argument] = [lines[idx_line]]
@@ -32,11 +33,12 @@ def load_dfa(fn: str):
 
             idx_line += 1
 
+    # check if all sections are present
     for req in ('states', 'sigma', 'rules'):
         if req not in dfa:
             print(f"Missing [{req.upper()}] section!")
             
-    # prelucrarea datelor din [STATES] pentru a obtine starea de inceput si de sfarsit
+    # data processing from [STATES] to obtain start and end states
 
     found_start = False
     found_end = False
@@ -62,14 +64,14 @@ def load_dfa(fn: str):
         print("No end state found!")
         return
 
-    # prelucarea datelor din RULES pentru a putea verifica corectidunea datelor ulterior
+    # data processing from [RULES] to be able to later verify the validity of every rule
     # ex.: 'q0, 0, q1'; => [q0, 0 , q1]
 
     for idx_rule in range(len(dfa["rules"])):
         dfa['rules'][idx_rule] = list(dfa['rules'][idx_rule].split(','))
         dfa['rules'][idx_rule] = [elem.strip() for elem in dfa['rules'][idx_rule]]
 
-    # verificare corectitudinii regulii
+    # verify rule validity
 
     for idx_rule in range(len(dfa["rules"])):
         if len(dfa["rules"][idx_rule]) != 3:
@@ -91,13 +93,14 @@ def load_dfa(fn: str):
 
     return dfa
 
-def is_valid(word: str, dfa: dict) -> bool:
+def is_dfa_valid(word: str, dfa: dict) -> bool:
 
     current_state = dfa['start']
     for symbol in word:
         if symbol not in dfa['sigma']:
-            raise ValueError(f"Simbolul '{symbol}' nu face parte din alfabetul DFA!")
-        # cauta tranzitia corespunzatoare
+            print(f"Symbol '{symbol}' doesn't exist in this DFA's alphabet!")
+            return False
+        # search for corresponding transition
         next_state = None
         for rule in dfa['rules']:
             if rule[0] == current_state and rule[1] == symbol:
@@ -109,11 +112,40 @@ def is_valid(word: str, dfa: dict) -> bool:
     return current_state == dfa['F']
 
 def main():
-    print("automat.dfa: ")
-    dfa = load_dfa("automat.dfa")
-    tests = ["", "0", "00", "1", "01", "001", "010", "0101", "0100", "0001110"]
-    for test in tests:
-        print(f"{test}: {is_valid(test, dfa)}")
+
+
+    n = len(sys.argv) # number of arguments
+
+    # run command line arguments (if they exist)
+    if n > 1:
+        try:
+            # first argument = DFA file
+            with open(sys.argv[1]) as file:
+                print(f"-> Read DFA from {file.name}")
+                dfa = load_dfa(file.name)
+        except FileNotFoundError:
+            print(f"Error: file '{sys.argv[1]}' not found.")
+            sys.exit(1)
+
+        print('--- COMMAND LINE ARGUMENTS ---')
+        for i in range(2, n):
+            if is_dfa_valid(sys.argv[i], dfa) == True:
+                print(f"String {sys.argv[i]}: PASSED")
+            else:
+                print(f"String {sys.argv[i]}: REJECTED")
+
+    else:
+        # default tests if not
+        print(f"-> Read DFA from automata_DFA.txt")
+        dfa = load_dfa("automata_DFA.txt")
+
+        tests = ["", "0", "00", "1", "01", "001", "010", "0101", "0100", "0001110", "0001011"]
+        for test in tests:
+            if is_dfa_valid(test, dfa) == True:
+                print(f"String {test}: PASSED")
+            else:
+                print(f"String {test}: REJECTED")
+
 
 if __name__ == "__main__":
     main()

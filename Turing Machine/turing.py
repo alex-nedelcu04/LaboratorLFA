@@ -1,32 +1,33 @@
 """
-Format fișier input:
-   [STATES] - fiecare linie: nume_stare (precizare extra dacă este de start sau de sfârșit)
-   [CHARACTERS] - alfabetul de intrare (un simbol pe linie)
-   [DIRECTIONS] - directiile posibile (L/R)
-   [RULES] - regulile de tranziție: stare_plecare, simbol, stare_sosire
-   [END] - marchează sfârșitul fiecărei secțiuni
-   Comentarii : //
+Input file format:
+   [STATES] - on every line: state_name [, start] / [, end] (one state need to be labeled as start, another as end)
+   [CHARACTERS] - input alphabet (one symbol per line)
+   [DIRECTIONS] - all possible (L/R)
+   [RULES] - transition rules: (source_state, symbol) -> (destination_state, symbol, direction)
+   [END] - marks the end of a section
+   Comments : #
 """
-import re
+import sys
+
 def load_turing(fn: str) :
     turing = dict()
     found_start = False
     found_end = False
-    with open(fn) as f:
-        # eliminare comentarii și linii albe
-        lines = [line.split("//", 1)[0].strip() for line in f if line.split("//", 1)[0].strip()]
+    with open(fn, encoding='utf-8') as f:
+        # read from file and ignore comments and empty lines
+        lines = [line.split("#", 1)[0].strip() for line in f if line.split("#", 1)[0].strip()]
         idx_line = 0
         num_lines = len(lines)
         while idx_line < num_lines:
-            # parcurgere pana la intalnirea unuia dintre [STATES], [SIGMA] si [RULES]
+            # go through lines until reaching one of [STATES], [SIGMA] or [RULES]
             while lines[idx_line][0] != '[' and lines[idx_line][-1] != ']':
                 idx_line += 1
             
             if lines[idx_line].upper() == '[STATES]':
                 idx_line += 1
-                # parcurgere argumete primite pana la intalnirea unui [END]
+                # go through arguments until reaching [END]
                 while lines[idx_line].upper() != '[END]':
-                    # obtinere stari si stabilirea celor care sunt de start si de sfarsit
+                    # get states and store which the start and end ones
                     add_to_argument = [elem.strip() for elem in lines[idx_line].split(',')]
                     if add_to_argument[0] == 'space':
                         add_to_argument[0] = ' '
@@ -44,10 +45,10 @@ def load_turing(fn: str) :
                         turing['states'].append(add_to_argument[0])
                     
                     idx_line += 1
-            elif lines[idx_line].upper() != '[END]':
+            elif lines[idx_line].upper() != '[END]': # Section that is not [STATES]
                 argument = lines[idx_line][1:-1].lower()
                 idx_line += 1
-                # parcurgere argumente primite pana la intalnirea unui [END]
+                # go through arguments until reaching [END]
                 while lines[idx_line].upper() != '[END]':
                     add_to_argument = lines[idx_line]
                     if add_to_argument == 'space':
@@ -61,7 +62,7 @@ def load_turing(fn: str) :
 
             idx_line += 1
 
-    # veriicare prezenta sectiuni STATES, CHARCATERS, DIRECTIONS si RULES
+    # verify if sections [STATES], [CHARCATERS], [DIRECTIONS] and [RULES] are all present
 
     for req in ('states', 'characters', 'directions', 'rules'):
         if req not in turing.keys():
@@ -101,7 +102,7 @@ def run_turing(turing: dict, tape: list, tape_size = 1000):
     while head in range(tape_size) and current_state != turing['end']:
         rule_applied = False
         for rule in rules:
-            # extragere informatii din reguli
+            # extract data from rules
             start, end = rule.split("->")
 
             start = start.replace('(', '').replace(')', '').strip()
@@ -117,7 +118,7 @@ def run_turing(turing: dict, tape: list, tape_size = 1000):
                 end[1] = ' '
 
 
-            # aplicare regula
+            #  apply rule
             if current_state == start[0] and tape[head] == start[1]:
                 current_state = end[0]
                 tape[head] = end[1]
@@ -130,25 +131,55 @@ def run_turing(turing: dict, tape: list, tape_size = 1000):
 
         if not rule_applied:
             break
+    return ''.join(tape)
+
+def convert_string_to_tape(tape_size: int, s = "") -> list:
+    tape = [' ']*tape_size
+    str_length = len(s)
+    if str_length < tape_size:
+        for idx in range(0, str_length):
+            tape[idx] = s[idx]
     return tape
-
 def main():
-    tape_size = 1000
-    for fn in ["write_12_then_stop.turing", "write_1010_then_stop.turing", "right_left_right_write_1.turing"]:
-        tape = [' '] * tape_size
-        print(f"{fn}:")
-        tape = run_turing(load_turing(fn), tape, tape_size)
-        print(tape)
-        print()
-    
-    
-    tape = [' '] * tape_size
-    tape[0] = tape[1] = tape[2] = tape[3] = '1'
-    print("add_1_to_existing_tape.turing:")
-    print(f"Tape before: {tape}")
-    tape = run_turing(load_turing("add_1_to_existing_tape.turing"), tape, tape_size)
-    print(f"Tape now: {tape}")
+    tape_size = 80
 
+    n = len(sys.argv)  # number of arguments
+
+    # run command line arguments (if they exist)
+    # Arguments: filename1 string1 filname2 string2
+    if n > 1 and n % 2 != 0: # even -> arguments are not all (filename, string) pairs
+        print('--- COMMAND LINE ARGUMENTS ---')
+        for i in range(1, n, 2):
+
+            print(f"{sys.argv[i]}:")
+            tape = convert_string_to_tape(tape_size, sys.argv[i+1])
+            print(f"Tape before: ({''.join(tape)})")
+            tape = run_turing(load_turing(sys.argv[i]), tape, tape_size)
+            print(f"Tape now: ({tape})")
+            print()
+
+    else:
+        # default tests if not
+        for fn in ["write_12_then_stop_TURING.txt", "write_1010_then_stop_TURING.txt",
+                   "right_left_right_write_1_TURING.txt", "1_every_second_blank_TURING.txt"]:
+            tape = [' '] * tape_size
+            print(f"{fn}:")
+            print(f"Tape before: ({''.join(tape)})")
+            tape = run_turing(load_turing(fn), tape, tape_size)
+            print(f"Tape now: ({tape})")
+            print()
+
+        tape = convert_string_to_tape(tape_size, "1111")
+        print("add_1_to_existing_tape_TURING.txt:")
+        print(f"Tape before: ({''.join(tape)})")
+        tape = run_turing(load_turing("add_1_to_existing_tape_TURING.txt"), tape, tape_size)
+        print(f"Tape now: ({tape})")
+
+        tape = convert_string_to_tape(tape_size, "110110$        %           %    ")
+        print("copy_string_between_%_TURING.txt:")
+        print(f"Tape before: ({''.join(tape)})")
+        tape = run_turing(load_turing("copy_string_between_%_TURING.txt"), tape, tape_size)
+        print(f"Tape now: ({tape})")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-// Exemplu automat
+# Game DFA
 [STateS]
 Entrance, start
 Exit, end

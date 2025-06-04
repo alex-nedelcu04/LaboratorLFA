@@ -1,4 +1,4 @@
-# Exemplu automat
+# accepts only strings that end in 0 or that have an even number of 1s after the last 0
 [STateS]
 q0, start
 q1, end
@@ -9,7 +9,7 @@ q1, end
 [END]
 [RULES]
 q0,0,q1
-q0,0,q1
+q0,1,q1
 q1,0,q1
 q1,1,q0
 [END]
